@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:timezone/timezone.dart' as tz;
 
@@ -13,7 +14,8 @@ class SettingsService {
   Future<String> tmzLocation() async => tz.local.name;
   // get part time percentage
   Future<int> partTimePercentage() async => 100;
-  Future<bool> isUserLogged() async => false;
+  Future<bool> isUserLogged() async =>
+      FirebaseAuth.instance.currentUser != null;
 
   /// Persists the user's preferred ThemeMode to local or remote storage.
   Future<void> updateThemeMode(ThemeMode theme) async {
