@@ -9,13 +9,16 @@ import 'package:timezone/timezone.dart' as tz;
 /// you'd like to store settings on a web server, use the http package.
 class SettingsService {
   /// Loads the User's preferred ThemeMode from local or remote storage.
-  Future<ThemeMode> themeMode() async => ThemeMode.system;
+  Future<ThemeMode> themeMode() async => ThemeMode.dark;
   // get tmz location of sys
   Future<String> tmzLocation() async => tz.local.name;
   // get part time percentage
   Future<int> partTimePercentage() async => 100;
   Future<bool> isUserLogged() async =>
       FirebaseAuth.instance.currentUser != null;
+
+  Future<String> companyName() async => 'bit4id';
+  Future<String> companyAddress() async => 'Company Address';
 
   /// Persists the user's preferred ThemeMode to local or remote storage.
   Future<void> updateThemeMode(ThemeMode theme) async {
@@ -34,6 +37,16 @@ class SettingsService {
   }
 
   Future<void> updateUserLogged(bool isUserLogged) async {
+    // Use the shared_preferences package to persist settings locally or the
+    // http package to persist settings over the network.
+  }
+
+  Future<void> updateCompanyName(String companyName) async {
+    // Use the shared_preferences package to persist settings locally or the
+    // http package to persist settings over the network.
+  }
+
+  Future<void> updateCompanyAddress(String companyAddress) async {
     // Use the shared_preferences package to persist settings locally or the
     // http package to persist settings over the network.
   }

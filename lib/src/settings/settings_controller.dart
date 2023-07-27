@@ -18,12 +18,16 @@ class SettingsController with ChangeNotifier {
   late int _partTimePercentage;
   late String _tmzLocation;
   late bool _isUserLogged;
+  late String _companyName;
+  late String _companyAddress;
 
   // Allow Widgets to read the user's preferred ThemeMode.
   ThemeMode get themeMode => _themeMode;
   int get partTimePercentage => _partTimePercentage;
   String get tmzLocation => _tmzLocation;
   bool get isUserLogged => _isUserLogged;
+  String get companyName => _companyName;
+  String get companyAddress => _companyAddress;
 
   /// Load the user's settings from the SettingsService. It may load from a
   /// local database or the internet. The controller only knows it can load the
@@ -33,6 +37,8 @@ class SettingsController with ChangeNotifier {
     _partTimePercentage = await _settingsService.partTimePercentage();
     _tmzLocation = await _settingsService.tmzLocation();
     _isUserLogged = await _settingsService.isUserLogged();
+    _companyName = await _settingsService.companyName();
+    _companyAddress = await _settingsService.companyAddress();
 
     // Important! Inform listeners a change has occurred.
     notifyListeners();
@@ -87,5 +93,27 @@ class SettingsController with ChangeNotifier {
     notifyListeners();
 
     await _settingsService.updateUserLogged(newIsUserLogged);
+  }
+
+  Future<void> updateCompanyName(String? newCompanyName) async {
+    if (newCompanyName == null) return;
+    if (newCompanyName == _companyName) return;
+
+    _companyName = newCompanyName;
+
+    notifyListeners();
+
+    await _settingsService.updateCompanyName(newCompanyName);
+  }
+
+  Future<void> updateCompanyAddress(String? newCompanyAddress) async {
+    if (newCompanyAddress == null) return;
+    if (newCompanyAddress == _companyAddress) return;
+
+    _companyAddress = newCompanyAddress;
+
+    notifyListeners();
+
+    await _settingsService.updateCompanyAddress(newCompanyAddress);
   }
 }

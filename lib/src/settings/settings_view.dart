@@ -196,12 +196,16 @@ class SignOutButton extends StatelessWidget {
               ),
             )),
         backgroundColor: const Color(0x00444444),
-        onPressed: onPressed ?? FirebaseAuth.instance.signOut,
+        onPressed: onPressed ?? signOutGoogle,
         padding: const EdgeInsets.all(0),
         shape: ButtonTheme.of(context).shape);
   }
 }
 
-void printHello(any) {
+void printHello(dynamic? any) {
+  print('Hello');
+}
+
+void printHello2() {
   print('Hello');
 }
