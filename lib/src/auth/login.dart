@@ -1,3 +1,4 @@
+import 'package:flutter_application_2/src/MainPage/main_page_view.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:googleapis/calendar/v3.dart' as calendar;

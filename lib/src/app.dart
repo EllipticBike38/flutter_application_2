@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'MainPage/calendarHandle.dart';
 import 'MainPage/sample_item_details_view.dart';
 import 'MainPage/main_page_view.dart';
 import 'settings/settings_controller.dart';
@@ -22,6 +23,8 @@ class MyApp extends StatelessWidget {
     //
     // The AnimatedBuilder Widget listens to the SettingsController for changes.
     // Whenever the user updates their settings, the MaterialApp is rebuilt.
+
+    var calendarHandle = CalendarHandle(settingsController);
     return AnimatedBuilder(
       animation: settingsController,
       builder: (BuildContext context, Widget? child) {
@@ -62,6 +65,7 @@ class MyApp extends StatelessWidget {
 
           // Define a function to handle named routes in order to support
           // Flutter web url navigation and deep linking.
+
           onGenerateRoute: (RouteSettings routeSettings) {
             return MaterialPageRoute<void>(
               settings: routeSettings,
@@ -75,6 +79,7 @@ class MyApp extends StatelessWidget {
                   default:
                     return MainPageView(
                       controller: settingsController,
+                      calendarHandle: calendarHandle,
                     );
                 }
               },
