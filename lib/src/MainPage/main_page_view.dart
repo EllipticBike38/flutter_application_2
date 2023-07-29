@@ -1,41 +1,24 @@
-import 'package:googleapis/calendar/v3.dart' as calendar;
-
 import 'package:flutter/material.dart';
 import '../settings/settings_controller.dart';
 import '../settings/settings_view.dart';
 import 'calendarHandle.dart';
+import 'date_title.dart';
 import 'myCalendar.dart';
 import 'sample_item.dart';
 
-//a class to handle calendar stuff with those 3 methods getCalendarApi, getCalendarId, readCalendarMonth
-
-/// Displays a list of SampleItems.
-class MainPageView extends StatelessWidget {
-  MainPageView({
+class MainPageView extends StatefulWidget {
+  const MainPageView({
     super.key,
     this.items = const [SampleItem(1), SampleItem(2), SampleItem(3)],
     required this.controller,
-  }) {
-    // Create a CalendarHandle object
-    handle = CalendarHandle(controller);
-  }
-  late CalendarHandle handle;
+    required this.calendarHandle,
+  });
+
+  final CalendarHandle calendarHandle;
 
   static const routeName = '/';
 
   final List<SampleItem> items;
-
-  void createEvent() async {
-    var event = calendar.Event(
-      description: 'Event name',
-      start: calendar.EventDateTime(dateTime: DateTime.now()),
-      end: calendar.EventDateTime(
-          dateTime: DateTime.now().add(Duration(hours: 1))),
-    );
-
-    print(event.toJson());
-    // Create object of event
-  }
 
   static var statusTheme = {
     'Sw': {
@@ -63,19 +46,25 @@ class MainPageView extends StatelessWidget {
       'text': 'Ferie',
       'textColor': Colors.white,
     },
-    'Tr': {
-      'color': Colors.blue,
-      'text': 'Trasferta',
-      'textColor': Colors.white,
-    },
     'A': {
       'color': Colors.grey,
       'text': 'Assenza',
       'textColor': Colors.black,
     },
+    'Tr': {
+      'color': Colors.blue,
+      'text': 'Trasferta',
+      'textColor': Colors.white,
+    },
+    'Vc': {
+      'color': Colors.red,
+      'text': 'Festività',
+      'textColor': Colors.white,
+    },
   };
 
   final SettingsController controller;
+
   static const months = [
     'GENNAIO',
     'FEBBRAIO',
@@ -90,8 +79,79 @@ class MainPageView extends StatelessWidget {
     'NOVEMBRE',
     'DICEMBRE'
   ];
+
+  @override
+  State<MainPageView> createState() => _MainPageViewState();
+}
+
+class _MainPageViewState extends State<MainPageView> {
+  DateTime selectedDate = DateTime(DateTime.now().toLocal().year,
+      DateTime.now().toLocal().month, DateTime.now().toLocal().day);
+
+  List<Map<String, Object?>> dateData = [];
+
+  static var statusThemeKeys = MainPageView.statusTheme.keys;
+
+  void updateDateData() {
+    widget.calendarHandle.readCalendarDay(selectedDate).then((value) {
+      setState(() {
+        dateData = value;
+        statusThemeKeys = MainPageView.statusTheme.keys.where((element) =>
+            isHoliday(selectedDate)
+                ? element == 'Vc' || element == 'Tr'
+                : element != 'Vc');
+      });
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    updateEvents(selectedDate.year, selectedDate.month);
+    updateDateData();
+  }
+
+  bool initialized = false;
+
+  Map<String?, Map<String, Object?>> events = {};
+
+  void updateEvents(int year, int month) {
+    widget.calendarHandle
+        .readCalendarMonth(month, year)
+        .then((value) => setState(() {
+              if (value == null) {
+                events = {};
+              } else {
+                events = value[0];
+              }
+            }));
+  }
+
+  void updateSelectedDate(DateTime day) {
+    setState(() {
+      statusThemeKeys = MainPageView.statusTheme.keys;
+      selectedDate = day;
+      updateDateData();
+    });
+  }
+
+  bool isHoliday(DateTime day) {
+    return day.weekday == DateTime.saturday ||
+        day.weekday == DateTime.sunday ||
+        MyCalendar.festivities.contains(
+            '${day.day < 10 ? "0" : ""}${day.day}-${day.month < 10 ? "0" : ""}${day.month}');
+  }
+
   @override
   Widget build(BuildContext context) {
+    MyCalendar calendarWidget = MyCalendar(
+      calendarHandle: widget.calendarHandle,
+      statusTheme: MainPageView.statusTheme,
+      controller: widget.controller,
+      updateToday: updateSelectedDate,
+      updateEvents: updateEvents,
+      events: events,
+    );
     return Scaffold(
       appBar: AppBar(
         title: const Text('Calendar'),
@@ -102,81 +162,19 @@ class MainPageView extends StatelessWidget {
               // Navigate to the settings page. If the user leaves and returns
               // to the app after it has been killed while running in the
               // background, the navigation stack is restored.
-              Navigator.restorablePushNamed(context, SettingsView.routeName);
+              Navigator.pushReplacementNamed(context, SettingsView.routeName);
             },
           ),
         ],
       ),
-
-      // To work with lists that may contain a large number of items, it's best
-      // to use the ListView.builder constructor.
-      //
-      // In contrast to the default ListView constructor, which requires
-      // building all Widgets up front, the ListView.builder constructor lazily
-      // builds Widgets as they're scrolled into view.
-      // body: ListView.builder(
-      //   // Providing a restorationId allows the ListView to restore the
-      //   // scroll position when a user leaves and returns to the app after it
-      //   // has been killed while running in the background.
-      //   restorationId: 'sampleItemListView',
-      //   itemCount: items.length,
-      //   itemBuilder: (BuildContext context, int index) {
-      //     final item = items[index];
-      //     return ListTile(
-      //         title: Text(controller.isUserLogged
-      //             ? 'SampleItem ${item.id}'
-      //             : 'is null'),
-      //         leading: const CircleAvatar(
-      //           // Display the Flutter Logo image asset.
-      //           foregroundImage: AssetImage('assets/images/flutter_logo.png'),
-      //         ),
-      //         onTap: () {
-      //           // Navigate to the details page. If the user leaves and returns to
-      //           // the app after it has been killed while running in the
-      //           // background, the navigation stack is restored.
-      //           Navigator.restorablePushNamed(
-      //             context,
-      //             SampleItemDetailsView.routeName,
-      //           );
-      //         });
-      //   },
-      // ),
-
       body: Column(
         children: [
           Expanded(
             child: ListView(
               children: [
-                Row(
-                  textBaseline: TextBaseline.alphabetic,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  // 20 gennaio 2023 ma gennaio con un font più piccolo e 20 rosso
-                  children: [
-                    Text(
-                      DateTime.now().day.toString(),
-                      style: const TextStyle(
-                        fontSize: 60,
-                        color: Colors.red,
-                      ),
-                    ),
-                    Column(
-                      children: [
-                        Text(
-                          months[DateTime.now().month - 1],
-                          style: const TextStyle(
-                            fontSize: 20,
-                          ),
-                        ),
-                        Text(
-                          DateTime.now().year.toString(),
-                          style: const TextStyle(
-                            fontSize: 30,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                DateTitle(
+                  months: MainPageView.months,
+                  selectedDate: selectedDate,
                 ),
 
                 Row(
@@ -189,10 +187,7 @@ class MainPageView extends StatelessWidget {
                       width: MediaQuery.of(context).size.width < 400
                           ? MediaQuery.of(context).size.width
                           : 400,
-                      child: MyCalendar(
-                        statusTheme: statusTheme,
-                        controller: controller,
-                      ),
+                      child: calendarWidget,
                     ),
                     // Spacer()
                   ],
@@ -203,42 +198,82 @@ class MainPageView extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       DropdownButton<String>(
-                          value: 'A',
+                          value: dateData.isEmpty
+                              ? (isHoliday(selectedDate) ? 'Vc' : 'A')
+                              : (dateData[0]['type'] ??
+                                      (isHoliday(selectedDate) ? 'Vc' : 'A'))
+                                  as String,
                           items: [
-                            for (var stat in statusTheme.keys)
+                            for (var stat in statusThemeKeys)
                               DropdownMenuItem(
                                 value: stat,
-                                child:
-                                    Text(statusTheme[stat]?['text'] as String),
+                                child: Text(MainPageView.statusTheme[stat]
+                                    ?['text'] as String),
                               ),
                           ],
-                          onChanged: printHello),
-                      const Row(
-                        children: [
-                          Checkbox(value: false, onChanged: printHello),
-                          Text('Part Time'),
-                        ],
-                      )
+                          onChanged: (value) {
+                            var Pt = true;
+                            if (dateData[0].isNotEmpty) {
+                              Pt = (dateData[0]['end'] as DateTime)
+                                      .difference(
+                                          dateData[0]['start'] as DateTime)
+                                      .inHours <
+                                  8;
+                            }
+                            widget.calendarHandle
+                                .createEvent(selectedDate, value as String, Pt)
+                                .then((value) {
+                              updateEvents(
+                                  selectedDate.year, selectedDate.month);
+                              updateDateData();
+                            });
+                          }),
+                      if (widget.controller.partTimePercentage != 100 &&
+                          dateData.isNotEmpty &&
+                          dateData[0].isNotEmpty)
+                        Row(
+                          children: [
+                            Checkbox(value: () {
+                              var i = (dateData[0]['end'] as DateTime)
+                                  .difference(dateData[0]['start'] as DateTime);
+                              return i.inHours < 8;
+                            }(), onChanged: (value) {
+                              widget.calendarHandle
+                                  .createEvent(
+                                      selectedDate,
+                                      dateData[0]['type'] as String,
+                                      value ?? false)
+                                  .then((value) {
+                                updateEvents(
+                                    selectedDate.year, selectedDate.month);
+                                // updateDateData();
+                              });
+                              ;
+                            }),
+                            const Text('Part Time'),
+                          ],
+                        )
+                      else
+                        const Spacer()
                     ],
                   ),
                 ),
                 const Divider(),
-                // mocks permessi generator with choiseble hours start and end
                 Padding(
-                  padding: EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.all(8.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Permessi',
+                      const Text('Permessi',
                           style: TextStyle(
                             fontSize: 20,
                           )),
                       // pluss icon button
                       IconButton(
                           onPressed: () {
-                            handle.readCalendarMonth(7, 2023);
+                            widget.calendarHandle.readCalendarMonth(7, 2023);
                           },
-                          icon: Icon(Icons.add))
+                          icon: const Icon(Icons.add))
                     ],
                   ),
                 ),
