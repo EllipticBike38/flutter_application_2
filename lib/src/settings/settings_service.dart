@@ -13,7 +13,7 @@ class SettingsService {
   // get tmz location of sys
   Future<String> tmzLocation() async => tz.local.name;
   // get part time percentage
-  Future<int> partTimePercentage() async => 100;
+  Future<int> partTimePercentage() async => 50;
   Future<bool> isUserLogged() async =>
       FirebaseAuth.instance.currentUser != null;
 
