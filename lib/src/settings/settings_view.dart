@@ -1,10 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_2/src/MainPage/main_page_view.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
 import '../auth/login.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 import 'settings_controller.dart';
+import 'sign_out_button.dart';
 
 /// Displays the various settings that can be customized by the user.
 ///
@@ -141,8 +143,11 @@ class SettingsView extends StatelessWidget {
 
                   ElevatedButton(
                       style: ButtonStyle(),
-                      onPressed: () {},
-                      child: Text('Save'))
+                      onPressed: () {
+                        Navigator.pushReplacementNamed(
+                            context, MainPageView.routeName);
+                      },
+                      child: Text('Go Back'))
                 ],
               ),
             ),
@@ -150,55 +155,6 @@ class SettingsView extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-class SignOutButton extends StatelessWidget {
-  final Function? onPressed;
-
-  const SignOutButton({
-    super.key,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // return MaterialButton(
-    //     elevation: 2.0,
-    //     key: const ValueKey("Google"),
-    //     textColor: const Color(0xFFFFFFFF),
-    //     onPressed: FirebaseAuth.instance.signOut,
-    //     highlightColor: Colors.white30,
-    //     splashColor: Colors.white30,
-    //     shape: ButtonTheme.of(context).shape,
-    //     height: 36.0,
-    //     child: const SizedBox(
-    //         width: 35.0,
-    //         height: 35.0,
-    //         child: Image(
-    //           image: AssetImage(
-    //             'assets/logos/google_light.png',
-    //             package: 'flutter_signin_button',
-    //           ),
-    //         )));
-    return SignInButtonBuilder(
-        elevation: 2,
-        key: const ValueKey("GitHub"),
-        mini: true,
-        text: '',
-        image: const SizedBox(
-            width: 35.0,
-            height: 35.0,
-            child: Image(
-              image: AssetImage(
-                'assets/logos/google_light.png',
-                package: 'flutter_signin_button',
-              ),
-            )),
-        backgroundColor: const Color(0x00444444),
-        onPressed: onPressed ?? signOutGoogle,
-        padding: const EdgeInsets.all(0),
-        shape: ButtonTheme.of(context).shape);
   }
 }
 
