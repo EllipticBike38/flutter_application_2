@@ -1,4 +1,4 @@
-# 🇬🇧 Configuration of The Exquisite Flutter Application: A Guide for the Discerning Gentleman Developer 
+# :uk: Configuration of The Exquisite Flutter Application: A Guide for the Discerning Gentleman Developer 
 
 Dearest developer, as you find yourself upon the cusp of a grand adventure in the sophisticated world of Flutter, permit me to furnish you with the knowledge most refined and sagacious, a knowledge befitting your noble station.
 
@@ -15,7 +15,7 @@ Dearest developer, as you find yourself upon the cusp of a grand adventure in th
 
 You, dear developer, have triumphed in this symphony of configuration. Your application is now poised to grace the world with its elegance and grandeur. Should you encounter a dissonance, fear not; for your wit and valor shall overcome. Now, adjourn to the drawing room for tea; you have earned it.
 
-# 🇮🇹 Configurazione dell'App Flutter, a.k.a "Il Faidate del Guerriero Digitale" 
+# :it: Configurazione dell'App Flutter, a.k.a "Il Faidate del Guerriero Digitale" 
 
 Ehi tu, sì, proprio tu, eroe delle tastiere sporche e delle notti insonni davanti al monitor! Sei capitato qui perché qualcosa non funziona, vero? Ah, sento già il tuo grido disperato nell'oscurità dei forum di programmazione. Probabilmente ti sei imbattuto in questo repository e hai notato che qualcosa non torna. "Dove sono finiti i file `google-services.json` e `firebase_options.dart`?", ti starai chiedendo, con un misto di terrore e confusione.
 
