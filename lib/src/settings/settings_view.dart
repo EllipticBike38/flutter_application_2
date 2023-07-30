@@ -59,98 +59,109 @@ class SettingsView extends StatelessWidget {
             ],
           ),
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: ListView(
+            child: ListView(
                 shrinkWrap: true,
                 clipBehavior: Clip.antiAlias,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Part-time percentage:'),
-                      DropdownButton(
-                          value: controller.partTimePercentage,
-                          items: const [
-                            DropdownMenuItem(
-                              value: 50,
-                              child: Text('50%'),
-                            ),
-                            DropdownMenuItem(
-                              value: 75,
-                              child: Text('75%'),
-                            ),
-                            DropdownMenuItem(
-                              value: 100,
-                              child: Text('100%'),
-                            )
-                          ],
-                          onChanged: controller.updatePartTimePercentage),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Timezone:'),
-                      DropdownButton(
-                          style: TextStyle(
-                              overflow: TextOverflow.ellipsis,
-                              color: colorScheme.onSurface),
-                          value: controller.tmzLocation,
-                          items: [
-                            for (var location in locations.keys)
-                              DropdownMenuItem(
-                                value: location,
-                                child: Text(location),
-                              ),
-                          ],
-                          onChanged: controller.updateTmzLocation),
-                    ],
-                  ),
-                  TextField(
-                    decoration: InputDecoration(
-                      border: InputBorder.none,
-                      labelText: 'Company Name',
-                      labelStyle: TextStyle(color: colorScheme.onSurface),
-                    ),
-                  ),
-                  //geolocation
-
-                  FormLine(
-                      value: controller.companyName,
-                      label: 'Company Name',
-                      updateFun: controller.updateCompanyName),
-                  FormLine(
-                      value: controller.companyAddress,
-                      label: 'Company Address',
-                      updateFun: controller.updateCompanyAddress),
-                  const SizedBox(height: 10),
-                  if (currentUser == null)
-                    (SignInButton(
-                      Buttons.Google,
-                      onPressed: signInWithGoogle,
-                    ))
-                  else
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
                       children: [
-                        Text('Logout (${currentUser?.email ?? 'User'})'),
-                        SignOutButton(
-                          onPressed: FirebaseAuth.instance.signOut,
-                        )
+                        if (controller.isUserLogged)
+                          Column(
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text('Part-time percentage:'),
+                                  DropdownButton(
+                                      value: controller.partTimePercentage,
+                                      items: const [
+                                        DropdownMenuItem(
+                                          value: 50,
+                                          child: Text('50%'),
+                                        ),
+                                        DropdownMenuItem(
+                                          value: 75,
+                                          child: Text('75%'),
+                                        ),
+                                        DropdownMenuItem(
+                                          value: 100,
+                                          child: Text('100%'),
+                                        )
+                                      ],
+                                      onChanged:
+                                          controller.updatePartTimePercentage),
+                                ],
+                              ),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text('Timezone:'),
+                                  DropdownButton(
+                                      style: TextStyle(
+                                          overflow: TextOverflow.ellipsis,
+                                          color: colorScheme.onSurface),
+                                      value: controller.tmzLocation,
+                                      items: [
+                                        for (var location in locations.keys)
+                                          DropdownMenuItem(
+                                            value: location,
+                                            child: Text(location),
+                                          ),
+                                      ],
+                                      onChanged: controller.updateTmzLocation),
+                                ],
+                              ),
+                              TextField(
+                                decoration: InputDecoration(
+                                  border: InputBorder.none,
+                                  labelText: 'Company Name',
+                                  labelStyle:
+                                      TextStyle(color: colorScheme.onSurface),
+                                ),
+                              ),
+                              //geolocation
+
+                              FormLine(
+                                  value: controller.companyName,
+                                  label: 'Company Name',
+                                  updateFun: controller.updateCompanyName),
+                              FormLine(
+                                  value: controller.companyAddress,
+                                  label: 'Company Address',
+                                  updateFun: controller.updateCompanyAddress),
+                            ],
+                          ),
+                        const SizedBox(height: 10),
+                        if (currentUser == null)
+                          (SignInButton(
+                            Buttons.Google,
+                            onPressed: signInWithGoogle,
+                          ))
+                        else
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('Logout (${currentUser?.email ?? 'User'})'),
+                              SignOutButton(
+                                onPressed: FirebaseAuth.instance.signOut,
+                              )
+                            ],
+                          ),
+                        ElevatedButton(
+                            style: ButtonStyle(),
+                            onPressed: () {
+                              Navigator.pushReplacementNamed(
+                                  context, MainPageView.routeName);
+                            },
+                            child: Text('Go Back'))
                       ],
                     ),
-
-                  ElevatedButton(
-                      style: ButtonStyle(),
-                      onPressed: () {
-                        Navigator.pushReplacementNamed(
-                            context, MainPageView.routeName);
-                      },
-                      child: Text('Go Back'))
-                ],
-              ),
-            ),
+                  ),
+                ]),
           ),
         ],
       ),

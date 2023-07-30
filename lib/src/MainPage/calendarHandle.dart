@@ -66,8 +66,29 @@ class CalendarHandle {
     return _getCalendarApi();
   }
 
+  Future<void> updateCalendarId() async {
+    return await checkAuth(() => _updateCalendarId());
+  }
+
   Future<String?> getCalendarId() async {
     return await checkAuth(() => _getCalendarId());
+  }
+
+  Future<void> createCalendar() async {
+    if (!(await GoogleSignIn().isSignedIn())) {
+      this.calendarApi = getCalendarApi();
+    }
+    calendar.CalendarApi? calendarApi = await this.calendarApi;
+    if (calendarApi == null) {
+      return;
+    }
+    var newCalendar = calendar.Calendar();
+    newCalendar.summary = controller.companyName;
+    newCalendar.description = 'AutoCalendar ${controller.companyName}}';
+    newCalendar.timeZone = controller.tmzLocation;
+    await calendarApi.calendars
+        .insert(newCalendar)
+        .then((value) => this.calendarId = getCalendarId());
   }
 
   Future<List<Map<String?, Map<String, Object?>>>?> readCalendar(
@@ -97,6 +118,10 @@ class CalendarHandle {
     calendar.CalendarApi calendarApi = calendar.CalendarApi(MyClient(headers));
 
     return calendarApi;
+  }
+
+  Future<void> _updateCalendarId() async {
+    this.calendarId = getCalendarId();
   }
 
   Future<String?> _getCalendarId() async {

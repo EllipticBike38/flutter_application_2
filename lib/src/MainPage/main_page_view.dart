@@ -96,6 +96,8 @@ class _MainPageViewState extends State<MainPageView> {
 
   bool logged = false;
 
+  bool isCalendarExistent = false;
+
   void updateDateData() {
     widget.calendarHandle.readCalendarDay(selectedDate).then((value) {
       setState(() {
@@ -123,6 +125,10 @@ class _MainPageViewState extends State<MainPageView> {
   Map<String?, Map<String, Object?>> events = {};
 
   void updateEvents(int year, int month) {
+    widget.calendarHandle.getCalendarId().then((value) => setState(() {
+          isCalendarExistent = value != null;
+        }));
+    widget.calendarHandle.updateCalendarId();
     widget.calendarHandle
         .readCalendarMonth(month, year)
         .then((value) => setState(() {
@@ -212,6 +218,15 @@ class _MainPageViewState extends State<MainPageView> {
       updateEvents: updateEvents,
       events: events,
     );
+    String createText =
+        'The calendar ${widget.controller.companyName} is not created';
+
+    updateCreateText(str) {
+      setState(() {
+        createText = str;
+      });
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Calendar'),
@@ -248,113 +263,133 @@ class _MainPageViewState extends State<MainPageView> {
                   ),
                 ),
               ]
-            : [
-                Expanded(
-                  child: ListView(children: [
-                    DateTitle(
-                      months: MainPageView.months,
-                      selectedDate: selectedDate,
-                    ),
-                    Column(
-                      children: [
-                        Row(
+            : (!isCalendarExistent)
+                ? [
+                    Expanded(
+                      child: Center(
+                        child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            SizedBox(
-                              height: MediaQuery.of(context).size.width < 400
-                                  ? MediaQuery.of(context).size.width
-                                  : 400,
-                              width: MediaQuery.of(context).size.width < 400
-                                  ? MediaQuery.of(context).size.width
-                                  : 400,
-                              child: calendarWidget,
-                            ),
-                            // Spacer()
+                            Text(createText),
+                            ElevatedButton(
+                                onPressed: () {
+                                  updateCreateText('Creating calendar...');
+                                  widget.calendarHandle
+                                      .createCalendar()
+                                      .then((value) => setState(() {
+                                            isCalendarExistent = true;
+                                          }));
+                                },
+                                child: const Text('Create'))
                           ],
                         ),
-                      ],
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          DropdownButton<String>(
-                              value: dateData.isEmpty
-                                  ? (isHoliday(selectedDate) ? 'Vc' : 'A')
-                                  : (dateData[0]['type'] ??
-                                      (isHoliday(selectedDate)
-                                          ? 'Vc'
-                                          : 'A')) as String,
-                              items: [
-                                for (var stat in statusThemeKeys)
-                                  DropdownMenuItem(
-                                    value: stat,
-                                    child: Text(MainPageView.statusTheme[stat]
-                                        ?['text'] as String),
-                                  ),
-                              ],
-                              onChanged: (value) {
-                                var Pt = true;
-                                if (dateData[0].isNotEmpty) {
-                                  Pt = (dateData[0]['end'] as DateTime)
-                                          .difference(
-                                              dateData[0]['start'] as DateTime)
-                                          .inHours <
-                                      8;
-                                }
-                                widget.calendarHandle
-                                    .createEvent(
-                                        selectedDate, value as String, Pt)
-                                    .then((value) {
-                                  updateEvents(
-                                      selectedDate.year, selectedDate.month);
-                                  updateDateData();
-                                });
-                              }),
-                          if (widget.controller.partTimePercentage != 100 &&
-                              dateData.isNotEmpty &&
-                              dateData[0].isNotEmpty)
-                            Row(
-                              children: [
-                                Checkbox(value: () {
-                                  var i = (dateData[0]['end'] as DateTime)
-                                      .difference(
-                                          dateData[0]['start'] as DateTime);
-                                  return i.inHours < 8;
-                                }(), onChanged: (value) {
-                                  widget.calendarHandle
-                                      .createEvent(
-                                          selectedDate,
-                                          dateData[0]['type'] as String,
-                                          value ?? false)
-                                      .then((value) {
-                                    updateDateData();
-                                  });
-                                }),
-                                const Text('Part Time'),
-                              ],
-                            )
-                          else
-                            const Spacer()
-                        ],
                       ),
                     ),
-                    const Divider(),
-                    if (dateData.isNotEmpty &&
-                        ![
-                          'Pe',
-                          'A',
-                          'Vc',
-                          'Fe',
-                          'Mt',
-                          'Tr'
-                        ].contains((dateData[0]['type'] ??
-                            (isHoliday(selectedDate) ? 'Vc' : 'A')) as String))
-                      dateData[1].isEmpty ? permitPadding : permitRow
-                  ]),
-                )
-              ],
+                  ]
+                : [
+                    Expanded(
+                      child: ListView(children: [
+                        DateTitle(
+                          months: MainPageView.months,
+                          selectedDate: selectedDate,
+                        ),
+                        Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                  height:
+                                      MediaQuery.of(context).size.width < 400
+                                          ? MediaQuery.of(context).size.width
+                                          : 400,
+                                  width: MediaQuery.of(context).size.width < 400
+                                      ? MediaQuery.of(context).size.width
+                                      : 400,
+                                  child: calendarWidget,
+                                ),
+                                // Spacer()
+                              ],
+                            ),
+                          ],
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              DropdownButton<String>(
+                                  value: dateData.isEmpty
+                                      ? (isHoliday(selectedDate) ? 'Vc' : 'A')
+                                      : (dateData[0]['type'] ??
+                                          (isHoliday(selectedDate)
+                                              ? 'Vc'
+                                              : 'A')) as String,
+                                  items: [
+                                    for (var stat in statusThemeKeys)
+                                      DropdownMenuItem(
+                                        value: stat,
+                                        child: Text(
+                                            MainPageView.statusTheme[stat]
+                                                ?['text'] as String),
+                                      ),
+                                  ],
+                                  onChanged: (value) {
+                                    var Pt = true;
+                                    if (dateData[0].isNotEmpty) {
+                                      Pt = (dateData[0]['end'] as DateTime)
+                                              .difference(dateData[0]['start']
+                                                  as DateTime)
+                                              .inHours <
+                                          8;
+                                    }
+                                    widget.calendarHandle
+                                        .createEvent(
+                                            selectedDate, value as String, Pt)
+                                        .then((value) {
+                                      updateEvents(selectedDate.year,
+                                          selectedDate.month);
+                                      updateDateData();
+                                    });
+                                  }),
+                              if (widget.controller.partTimePercentage != 100 &&
+                                  dateData.isNotEmpty &&
+                                  dateData[0].isNotEmpty)
+                                Row(
+                                  children: [
+                                    Checkbox(value: () {
+                                      var i = (dateData[0]['end'] as DateTime)
+                                          .difference(
+                                              dateData[0]['start'] as DateTime);
+                                      return i.inHours < 8;
+                                    }(), onChanged: (value) {
+                                      widget.calendarHandle
+                                          .createEvent(
+                                              selectedDate,
+                                              dateData[0]['type'] as String,
+                                              value ?? false)
+                                          .then((value) {
+                                        updateDateData();
+                                      });
+                                    }),
+                                    const Text('Part Time'),
+                                  ],
+                                )
+                              else
+                                const Spacer()
+                            ],
+                          ),
+                        ),
+                        const Divider(),
+                        if (dateData.isNotEmpty &&
+                            !['Pe', 'A', 'Vc', 'Fe', 'Mt', 'Tr'].contains(
+                                (dateData[0]['type'] ??
+                                        (isHoliday(selectedDate) ? 'Vc' : 'A'))
+                                    as String))
+                          dateData[1].isEmpty ? permitPadding : permitRow
+                      ]),
+                    )
+                  ],
       ),
     );
   }
