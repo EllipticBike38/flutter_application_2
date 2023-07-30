@@ -185,22 +185,24 @@ class _MainPageViewState extends State<MainPageView> {
       ),
     );
 
-    var permitRow = ListTile(
-      title: const Text('Permesso'),
-      subtitle:
-          Text('${selectedDate.day}/${selectedDate.month}/${selectedDate.year}'
-              ' ${(dateData[1]['start'] as DateTime?)?.toLocal().hour}:'
-              '${(dateData[1]['start'] as DateTime?)?.toLocal().minute} -'
-              ' ${(dateData[1]['end'] as DateTime?)?.toLocal().hour}:'
-              '${(dateData[1]['end'] as DateTime?)?.toLocal().minute}'),
-      trailing: IconButton(
-          onPressed: () {
-            widget.calendarHandle
-                .deleteEvent(dateData[1]['id'] as String?)
-                .then((value) => updateDateData());
-          },
-          icon: const Icon(Icons.delete)),
-    );
+    var permitRow = dateData.isEmpty
+        ? Spacer()
+        : ListTile(
+            title: const Text('Permesso'),
+            subtitle: Text(
+                '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}'
+                ' ${(dateData[1]['start'] as DateTime?)?.toLocal().hour}:'
+                '${(dateData[1]['start'] as DateTime?)?.toLocal().minute} -'
+                ' ${(dateData[1]['end'] as DateTime?)?.toLocal().hour}:'
+                '${(dateData[1]['end'] as DateTime?)?.toLocal().minute}'),
+            trailing: IconButton(
+                onPressed: () {
+                  widget.calendarHandle
+                      .deleteEvent(dateData[1]['id'] as String?)
+                      .then((value) => updateDateData());
+                },
+                icon: const Icon(Icons.delete)),
+          );
 
     MyCalendar calendarWidget = MyCalendar(
       calendarHandle: widget.calendarHandle,
@@ -339,14 +341,12 @@ class _MainPageViewState extends State<MainPageView> {
                       ),
                     ),
                     const Divider(),
-                    if (!['Pe', 'A', 'Vc', 'Fe', 'Mt'].contains((dateData[0]
-                            ['type'] ??
-                        (isHoliday(selectedDate) ? 'Vc' : 'A')) as String))
+                    if (!['Pe', 'A', 'Vc', 'Fe', 'Mt', 'Tr'].contains(
+                        (dateData[0]['type'] ??
+                            (isHoliday(selectedDate) ? 'Vc' : 'A')) as String))
                       dateData[1].isEmpty ? permitPadding : permitRow
                   ]),
                 )
-
-                // list out permessi, mocks one
               ],
       ),
     );
