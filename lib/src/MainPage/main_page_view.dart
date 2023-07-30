@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_signin_button/flutter_signin_button.dart';
+
 import '../settings/settings_controller.dart';
 import '../settings/settings_view.dart';
 import 'calendarHandle.dart';
@@ -341,8 +341,15 @@ class _MainPageViewState extends State<MainPageView> {
                       ),
                     ),
                     const Divider(),
-                    if (!['Pe', 'A', 'Vc', 'Fe', 'Mt', 'Tr'].contains(
-                        (dateData[0]['type'] ??
+                    if (dateData.isNotEmpty &&
+                        ![
+                          'Pe',
+                          'A',
+                          'Vc',
+                          'Fe',
+                          'Mt',
+                          'Tr'
+                        ].contains((dateData[0]['type'] ??
                             (isHoliday(selectedDate) ? 'Vc' : 'A')) as String))
                       dateData[1].isEmpty ? permitPadding : permitRow
                   ]),
