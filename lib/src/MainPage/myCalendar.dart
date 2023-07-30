@@ -88,6 +88,44 @@ class _MyCalendarState extends State<MyCalendar> {
   Widget build(BuildContext context) {
     //get handler
 
+    dayBuilder(isToday) {
+      return (context, day, focusedDay) => Center(
+            child: Container(
+              alignment: Alignment.center,
+              height: 40,
+              width: 40,
+              decoration: BoxDecoration(
+                border:
+                    isToday ? Border.all(color: Colors.orange, width: 3) : null,
+                color: (widget.events)
+                        .keys
+                        .contains(day.toString().substring(0, 10))
+                    ? (widget.statusTheme[(widget
+                            .events)[day.toString().substring(0, 10)]!['type']]
+                        ?['color'] as Color)
+                    : MyCalendar.isHoliday(day, isFestivity: true)
+                        ? Colors.red
+                        : widget.statusTheme['A']?['color'] as Color,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                day.day.toString(),
+                style: TextStyle(
+                  color: MyCalendar.isHoliday(day, isFestivity: true)
+                      ? Colors.white
+                      : (widget.events)
+                              .keys
+                              .contains(day.toString().substring(0, 10))
+                          ? (widget.statusTheme[(widget.events)[
+                                  day.toString().substring(0, 10)]!['type']]
+                              ?['textColor'] as Color)
+                          : widget.statusTheme['A']?['textColor'] as Color,
+                ),
+              ),
+            ),
+          );
+    }
+
     return TableCalendar(
       shouldFillViewport: true,
       focusedDay: focusedDayState,
@@ -106,84 +144,20 @@ class _MyCalendarState extends State<MyCalendar> {
         CalendarFormat.month: 'Month',
       }),
       calendarBuilders: CalendarBuilders(
-        todayBuilder: (context, day, focusedDay) => Center(
-          child: Container(
-            alignment: Alignment.center,
-            height: 40,
-            width: 40,
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.orange, width: 3),
-              color: (widget.events)
-                      .keys
-                      .contains(day.toString().substring(0, 10))
-                  ? (widget.statusTheme[(widget
-                          .events)[day.toString().substring(0, 10)]!['type']]
-                      ?['color'] as Color)
-                  : MyCalendar.isHoliday(day)
-                      ? Colors.red
-                      : widget.statusTheme['A']?['color'] as Color,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              day.day.toString(),
-              style: TextStyle(
-                color: MyCalendar.isHoliday(day)
-                    ? Colors.white
-                    : (widget.events)
-                            .keys
-                            .contains(day.toString().substring(0, 10))
-                        ? (widget.statusTheme[(widget.events)[day
-                            .toString()
-                            .substring(0, 10)]!['type']]?['textColor'] as Color)
-                        : widget.statusTheme['A']?['textColor'] as Color,
-              ),
-            ),
-          ),
-        ),
-        defaultBuilder: (context, day, focusedDay) => Center(
-          child: Container(
-            alignment: Alignment.center,
-            height: 40,
-            width: 40,
-            decoration: BoxDecoration(
-              color: (widget.events)
-                      .keys
-                      .contains(day.toString().substring(0, 10))
-                  ? (widget.statusTheme[(widget
-                          .events)[day.toString().substring(0, 10)]!['type']]
-                      ?['color'] as Color)
-                  : MyCalendar.isHoliday(day)
-                      ? Colors.red
-                      : widget.statusTheme['A']?['color'] as Color,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              day.day.toString(),
-              style: TextStyle(
-                color: MyCalendar.isHoliday(day)
-                    ? Colors.white
-                    : (widget.events)
-                            .keys
-                            .contains(day.toString().substring(0, 10))
-                        ? (widget.statusTheme[
-                            (widget.events)[day.toString().substring(0, 10)]
-                                ?['type']]?['textColor'] as Color)
-                        : widget.statusTheme['A']?['textColor'] as Color,
-              ),
-            ),
-          ),
-        ),
+        todayBuilder: dayBuilder(true),
+        defaultBuilder: dayBuilder(false),
         dowBuilder: (context, day) {
-          if (MyCalendar.isHoliday(day, isFestivity: false)) {
-            final text = DateFormat.E('it_IT').format(day);
+          final text = DateFormat.E('it_IT').format(day);
 
-            return Center(
-              child: Text(
-                text,
-                style: const TextStyle(color: Colors.red),
-              ),
-            );
-          }
+          return Center(
+            child: Text(
+              text,
+              style: TextStyle(
+                  color: MyCalendar.isHoliday(day, isFestivity: false)
+                      ? Colors.red
+                      : Theme.of(context).colorScheme.onSurface),
+            ),
+          );
         },
       ),
     );

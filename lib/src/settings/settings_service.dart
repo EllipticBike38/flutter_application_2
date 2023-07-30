@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:timezone/timezone.dart' as tz;
 
+import '../auth/login.dart';
+
 /// A service that stores and retrieves user settings.
 ///
 /// By default, this class does not persist user settings. If you'd like to
@@ -31,15 +33,19 @@ class SettingsService {
     if (FirebaseAuth.instance.currentUser == null) {
       return defaultValue;
     }
-    var doc = await db
-        .collection("preferenze")
-        .doc(FirebaseAuth.instance.currentUser!.email)
-        .get();
-    if (!doc.exists) {
-      await populateDoc();
+    try {
+      var doc = await db
+          .collection("preferenze")
+          .doc(FirebaseAuth.instance.currentUser!.email)
+          .get();
+      if (!doc.exists) {
+        await populateDoc();
+        return defaultValue;
+      }
+      return doc.data()![field];
+    } catch (e) {
       return defaultValue;
     }
-    return doc.data()![field];
   }
 
   Future<ThemeMode> themeMode() async => ThemeMode.dark;

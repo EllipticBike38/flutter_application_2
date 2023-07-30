@@ -95,36 +95,6 @@ class SettingsView extends StatelessWidget {
                                           controller.updatePartTimePercentage),
                                 ],
                               ),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text('Timezone:'),
-                                  DropdownButton(
-                                      style: TextStyle(
-                                          overflow: TextOverflow.ellipsis,
-                                          color: colorScheme.onSurface),
-                                      value: controller.tmzLocation,
-                                      items: [
-                                        for (var location in locations.keys)
-                                          DropdownMenuItem(
-                                            value: location,
-                                            child: Text(location),
-                                          ),
-                                      ],
-                                      onChanged: controller.updateTmzLocation),
-                                ],
-                              ),
-                              TextField(
-                                decoration: InputDecoration(
-                                  border: InputBorder.none,
-                                  labelText: 'Company Name',
-                                  labelStyle:
-                                      TextStyle(color: colorScheme.onSurface),
-                                ),
-                              ),
-                              //geolocation
-
                               FormLine(
                                   value: controller.companyName,
                                   label: 'Company Name',

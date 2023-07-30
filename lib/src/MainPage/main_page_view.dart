@@ -218,6 +218,7 @@ class _MainPageViewState extends State<MainPageView> {
       updateEvents: updateEvents,
       events: events,
     );
+
     String createText =
         'The calendar ${widget.controller.companyName} is not created';
 
@@ -237,7 +238,7 @@ class _MainPageViewState extends State<MainPageView> {
               // Navigate to the settings page. If the user leaves and returns
               // to the app after it has been killed while running in the
               // background, the navigation stack is restored.
-              Navigator.pushNamed(context, SettingsView.routeName)
+              Navigator.pushReplacementNamed(context, SettingsView.routeName)
                   .then((value) => {
                         setState(() {
                           logged = widget.controller.isUserLogged;
