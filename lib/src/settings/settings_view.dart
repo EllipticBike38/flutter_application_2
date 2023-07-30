@@ -5,6 +5,7 @@ import 'package:flutter_signin_button/flutter_signin_button.dart';
 import '../auth/login.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
+import 'form_line.dart';
 import 'settings_controller.dart';
 import 'sign_out_button.dart';
 
@@ -30,6 +31,7 @@ class SettingsView extends StatelessWidget {
       currentUser = user;
       controller.updateIsUserLogged(user != null);
     });
+    final label = 'Hello';
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
@@ -59,10 +61,6 @@ class SettingsView extends StatelessWidget {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(16),
-              // Glue the SettingsController to the theme selection DropdownButton.
-              //
-              // When a user selects a theme from the dropdown list, the
-              // SettingsController is updated, which rebuilds the MaterialApp.
               child: ListView(
                 shrinkWrap: true,
                 clipBehavior: Clip.antiAlias,
@@ -117,13 +115,15 @@ class SettingsView extends StatelessWidget {
                     ),
                   ),
                   //geolocation
-                  TextField(
-                    decoration: InputDecoration(
-                      labelStyle: TextStyle(color: colorScheme.onSurface),
-                      border: InputBorder.none,
-                      labelText: 'Company Address',
-                    ),
-                  ),
+
+                  FormLine(
+                      value: controller.companyName,
+                      label: 'Company Name',
+                      updateFun: controller.updateCompanyName),
+                  FormLine(
+                      value: controller.companyAddress,
+                      label: 'Company Address',
+                      updateFun: controller.updateCompanyAddress),
                   const SizedBox(height: 10),
                   if (currentUser == null)
                     (SignInButton(
