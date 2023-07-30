@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_signin_button/flutter_signin_button.dart';
 import '../settings/settings_controller.dart';
 import '../settings/settings_view.dart';
 import 'calendarHandle.dart';
 import 'date_title.dart';
 import 'myCalendar.dart';
+import 'permit_pop_up.dart';
 import 'sample_item.dart';
 
 class MainPageView extends StatefulWidget {
@@ -90,7 +92,9 @@ class _MainPageViewState extends State<MainPageView> {
 
   List<Map<String, Object?>> dateData = [];
 
-  static var statusThemeKeys = MainPageView.statusTheme.keys;
+  var statusThemeKeys = MainPageView.statusTheme.keys;
+
+  bool logged = false;
 
   void updateDateData() {
     widget.calendarHandle.readCalendarDay(selectedDate).then((value) {
@@ -109,6 +113,9 @@ class _MainPageViewState extends State<MainPageView> {
     super.initState();
     updateEvents(selectedDate.year, selectedDate.month);
     updateDateData();
+    setState(() {
+      logged = widget.controller.isUserLogged;
+    });
   }
 
   bool initialized = false;
@@ -119,7 +126,7 @@ class _MainPageViewState extends State<MainPageView> {
     widget.calendarHandle
         .readCalendarMonth(month, year)
         .then((value) => setState(() {
-              if (value == null) {
+              if (value == null || value.isEmpty) {
                 events = {};
               } else {
                 events = value[0];
@@ -131,6 +138,7 @@ class _MainPageViewState extends State<MainPageView> {
     setState(() {
       statusThemeKeys = MainPageView.statusTheme.keys;
       selectedDate = day;
+
       updateDateData();
     });
   }
@@ -144,6 +152,56 @@ class _MainPageViewState extends State<MainPageView> {
 
   @override
   Widget build(BuildContext context) {
+    var alertDialogContent = PermitPopUp(
+        calendarHandle: widget.calendarHandle,
+        selectedDate: selectedDate,
+        updateDateData: updateDateData);
+
+    var permitPadding = Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Permessi',
+                  style: TextStyle(
+                    fontSize: 20,
+                  )),
+              // pluss icon button
+              IconButton(
+                  onPressed: () => showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                            insetPadding: const EdgeInsets.only(
+                                left: 20, right: 20, top: 200, bottom: 200),
+                            title: Text('Add permesso'),
+                            content: alertDialogContent,
+                          )),
+                  icon: const Icon(Icons.add))
+            ],
+          )
+        ],
+      ),
+    );
+
+    var permitRow = ListTile(
+      title: const Text('Permesso'),
+      subtitle:
+          Text('${selectedDate.day}/${selectedDate.month}/${selectedDate.year}'
+              ' ${(dateData[1]['start'] as DateTime?)?.toLocal().hour}:'
+              '${(dateData[1]['start'] as DateTime?)?.toLocal().minute} -'
+              ' ${(dateData[1]['end'] as DateTime?)?.toLocal().hour}:'
+              '${(dateData[1]['end'] as DateTime?)?.toLocal().minute}'),
+      trailing: IconButton(
+          onPressed: () {
+            widget.calendarHandle
+                .deleteEvent(dateData[1]['id'] as String?)
+                .then((value) => updateDateData());
+          },
+          icon: const Icon(Icons.delete)),
+    );
+
     MyCalendar calendarWidget = MyCalendar(
       calendarHandle: widget.calendarHandle,
       statusTheme: MainPageView.statusTheme,
@@ -158,138 +216,138 @@ class _MainPageViewState extends State<MainPageView> {
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
-            onPressed: () {
+            onPressed: () async {
               // Navigate to the settings page. If the user leaves and returns
               // to the app after it has been killed while running in the
               // background, the navigation stack is restored.
-              Navigator.pushReplacementNamed(context, SettingsView.routeName);
+              Navigator.pushNamed(context, SettingsView.routeName)
+                  .then((value) => {
+                        setState(() {
+                          logged = widget.controller.isUserLogged;
+                          updateEvents(selectedDate.year, selectedDate.month);
+                          updateSelectedDate(DateTime.now());
+                        })
+                      });
             },
           ),
         ],
       ),
       body: Column(
-        children: [
-          Expanded(
-            child: ListView(
-              children: [
-                DateTitle(
-                  months: MainPageView.months,
-                  selectedDate: selectedDate,
-                ),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(
-                      height: MediaQuery.of(context).size.width < 400
-                          ? MediaQuery.of(context).size.width
-                          : 400,
-                      width: MediaQuery.of(context).size.width < 400
-                          ? MediaQuery.of(context).size.width
-                          : 400,
-                      child: calendarWidget,
+        children: !logged
+            ? [
+                const Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('You are not logged in'),
+                      ],
                     ),
-                    // Spacer()
-                  ],
+                  ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      DropdownButton<String>(
-                          value: dateData.isEmpty
-                              ? (isHoliday(selectedDate) ? 'Vc' : 'A')
-                              : (dateData[0]['type'] ??
-                                      (isHoliday(selectedDate) ? 'Vc' : 'A'))
-                                  as String,
-                          items: [
-                            for (var stat in statusThemeKeys)
-                              DropdownMenuItem(
-                                value: stat,
-                                child: Text(MainPageView.statusTheme[stat]
-                                    ?['text'] as String),
-                              ),
-                          ],
-                          onChanged: (value) {
-                            var Pt = true;
-                            if (dateData[0].isNotEmpty) {
-                              Pt = (dateData[0]['end'] as DateTime)
-                                      .difference(
-                                          dateData[0]['start'] as DateTime)
-                                      .inHours <
-                                  8;
-                            }
-                            widget.calendarHandle
-                                .createEvent(selectedDate, value as String, Pt)
-                                .then((value) {
-                              updateEvents(
-                                  selectedDate.year, selectedDate.month);
-                              updateDateData();
-                            });
-                          }),
-                      if (widget.controller.partTimePercentage != 100 &&
-                          dateData.isNotEmpty &&
-                          dateData[0].isNotEmpty)
+              ]
+            : [
+                Expanded(
+                  child: ListView(children: [
+                    DateTitle(
+                      months: MainPageView.months,
+                      selectedDate: selectedDate,
+                    ),
+                    Column(
+                      children: [
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Checkbox(value: () {
-                              var i = (dateData[0]['end'] as DateTime)
-                                  .difference(dateData[0]['start'] as DateTime);
-                              return i.inHours < 8;
-                            }(), onChanged: (value) {
-                              widget.calendarHandle
-                                  .createEvent(
-                                      selectedDate,
-                                      dateData[0]['type'] as String,
-                                      value ?? false)
-                                  .then((value) {
-                                updateEvents(
-                                    selectedDate.year, selectedDate.month);
-                                // updateDateData();
-                              });
-                              ;
-                            }),
-                            const Text('Part Time'),
+                            SizedBox(
+                              height: MediaQuery.of(context).size.width < 400
+                                  ? MediaQuery.of(context).size.width
+                                  : 400,
+                              width: MediaQuery.of(context).size.width < 400
+                                  ? MediaQuery.of(context).size.width
+                                  : 400,
+                              child: calendarWidget,
+                            ),
+                            // Spacer()
                           ],
-                        )
-                      else
-                        const Spacer()
-                    ],
-                  ),
-                ),
-                const Divider(),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Permessi',
-                          style: TextStyle(
-                            fontSize: 20,
-                          )),
-                      // pluss icon button
-                      IconButton(
-                          onPressed: () {
-                            widget.calendarHandle.readCalendarMonth(7, 2023);
-                          },
-                          icon: const Icon(Icons.add))
-                    ],
-                  ),
-                ),
+                        ),
+                      ],
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          DropdownButton<String>(
+                              value: dateData.isEmpty
+                                  ? (isHoliday(selectedDate) ? 'Vc' : 'A')
+                                  : (dateData[0]['type'] ??
+                                      (isHoliday(selectedDate)
+                                          ? 'Vc'
+                                          : 'A')) as String,
+                              items: [
+                                for (var stat in statusThemeKeys)
+                                  DropdownMenuItem(
+                                    value: stat,
+                                    child: Text(MainPageView.statusTheme[stat]
+                                        ?['text'] as String),
+                                  ),
+                              ],
+                              onChanged: (value) {
+                                var Pt = true;
+                                if (dateData[0].isNotEmpty) {
+                                  Pt = (dateData[0]['end'] as DateTime)
+                                          .difference(
+                                              dateData[0]['start'] as DateTime)
+                                          .inHours <
+                                      8;
+                                }
+                                widget.calendarHandle
+                                    .createEvent(
+                                        selectedDate, value as String, Pt)
+                                    .then((value) {
+                                  updateEvents(
+                                      selectedDate.year, selectedDate.month);
+                                  updateDateData();
+                                });
+                              }),
+                          if (widget.controller.partTimePercentage != 100 &&
+                              dateData.isNotEmpty &&
+                              dateData[0].isNotEmpty)
+                            Row(
+                              children: [
+                                Checkbox(value: () {
+                                  var i = (dateData[0]['end'] as DateTime)
+                                      .difference(
+                                          dateData[0]['start'] as DateTime);
+                                  return i.inHours < 8;
+                                }(), onChanged: (value) {
+                                  widget.calendarHandle
+                                      .createEvent(
+                                          selectedDate,
+                                          dateData[0]['type'] as String,
+                                          value ?? false)
+                                      .then((value) {
+                                    updateDateData();
+                                  });
+                                }),
+                                const Text('Part Time'),
+                              ],
+                            )
+                          else
+                            const Spacer()
+                        ],
+                      ),
+                    ),
+                    const Divider(),
+                    if (!['Pe', 'A', 'Vc', 'Fe', 'Mt'].contains((dateData[0]
+                            ['type'] ??
+                        (isHoliday(selectedDate) ? 'Vc' : 'A')) as String))
+                      dateData[1].isEmpty ? permitPadding : permitRow
+                  ]),
+                )
 
                 // list out permessi, mocks one
-
-                const ListTile(
-                  title: Text('Permesso'),
-                  subtitle: Text('8:00 - 12:00'),
-                  trailing: IconButton(
-                      onPressed: printHello2, icon: Icon(Icons.delete)),
-                ),
               ],
-            ),
-          ),
-        ],
       ),
     );
   }

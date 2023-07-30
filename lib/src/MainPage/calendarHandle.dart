@@ -31,7 +31,7 @@ class CalendarHandle {
   final SettingsController controller;
   late Future<calendar.CalendarApi?> calendarApi;
   late Future<String?> calendarId;
-  //todo decoratore per gestire l'errore di autenticazione
+  //todo gestire l'update di calendarApi e calendarId
   Future<T?> checkAuth<T>(
     Future<T?> Function() funCreator,
   ) async {
@@ -53,7 +53,13 @@ class CalendarHandle {
   }
 
   Future<void> createEvent(DateTime day, String type, bool partTime) async {
-    return await checkAuth(() => _createEvent(day, type, partTime));
+    return await checkAuth(
+        () => _createEvent(day, type, partTime, false, null, null));
+  }
+
+  Future<void> createExtraPermit(DateTime day, start, end) async {
+    return await checkAuth(
+        () => _createEvent(day, 'Pe', null, true, start, end));
   }
 
   Future<calendar.CalendarApi?> getCalendarApi() async {
@@ -128,15 +134,23 @@ class CalendarHandle {
     }
     calendar.CalendarApi? calendarApi = await this.calendarApi;
     if (calendarApi == null) {
+      this.calendarApi = getCalendarApi();
+      calendarApi = await this.calendarApi;
+    }
+    if (calendarApi == null) {
       return [];
     }
     var calendarId = await this.calendarId;
+    if (calendarId == null) {
+      this.calendarId = getCalendarId();
+      calendarId = await this.calendarId;
+    }
     if (calendarId == null) {
       return [];
     }
     var eventsMap = <String?, Map<String, Object?>>{};
     var permitsMap = <String?, Map<String, Object?>>{};
-    var events = (await calendarApi.events.list(calendarId,
+    var events = (await calendarApi.events.list(calendarId!,
         timeMin: start, timeMax: end, timeZone: controller.tmzLocation));
     for (var e in events.items as Iterable) {
       if (e.summary?.split(' - ')[0] == 'Pe') {
@@ -170,6 +184,7 @@ class CalendarHandle {
     }
     var index =
         DateTime(day.year, day.month, day.day).toString().substring(0, 10);
+    if (dayData.length == 0) return [{}, {}];
     return [
       dayData![0][index] == null ? {} : dayData[0][index]!,
       dayData[1][index] == null ? {} : dayData[1][index]!,
@@ -178,49 +193,103 @@ class CalendarHandle {
 
   // if this is not a permit (Ps) event already exist a non permit event in that day, delete it and create a new one,
   // else if this is a permit event already exist a permit event in that day, delete it and create a new one
-  Future<void> _createEvent(DateTime day, String type, bool partTime) async {
+  Future<void> _createEvent(DateTime day, String type, bool? partTime,
+      bool? isExtraPermit, int? startH, int? endH) async {
     if (!(await GoogleSignIn().isSignedIn())) {
       this.calendarApi = getCalendarApi();
     }
     calendar.CalendarApi? calendarApi = await this.calendarApi;
-    if (calendarApi == null) return;
+    if (calendarApi == null) this.calendarApi = getCalendarApi();
     var calendarId = await this.calendarId;
     if (calendarId == null) {
       return;
     }
 
-    var events = await calendarApi.events.list(calendarId,
+    DateTime startTime;
+    DateTime endTime;
+
+    if (partTime != null) {
+      startTime = DateTime(day.year, day.month, day.day, 8, 30);
+      endTime = DateTime(day.year, day.month, day.day, 8, 30)
+          .add(Duration(
+              hours: (partTime ? 8 * controller.partTimePercentage ~/ 100 : 8),
+              minutes: 8 * controller.partTimePercentage ~/ 100 > 6 ? 0 : 45))
+          .toLocal();
+    } else {
+      startTime =
+          DateTime(day.year, day.month, day.day, startH!, startH > 12 ? 15 : 30)
+              .toLocal();
+      endTime =
+          DateTime(day.year, day.month, day.day, endH!, endH > 12 ? 15 : 30)
+              .toLocal();
+    }
+
+    var events = await calendarApi!.events.list(calendarId,
         timeZone: controller.tmzLocation,
         timeMin: DateTime(day.year, day.month, day.day),
         timeMax: DateTime(day.year, day.month, day.day + 1));
     for (var e in events.items as Iterable) {
-      // se ci sono più eventi in un giorno, cancella il Pe solo se Type è Pe
-      if ((events.items!.length > 1 &&
-              type == 'Pe' &&
-              e.summary?.split(' - ')[0] == type) ||
+      // se ci sono più eventi in un giorno, cancella il Pe solo se Type è P
+      final eventType = e.summary?.split(' - ')[0];
+      final types = ['Pe', 'A', 'Vc', 'Fe', 'Mt'];
+      final isSpecialType = types.contains(type);
+
+      if (isExtraPermit ?? false) {
+        if (type != 'Pe' && eventType != 'Pe') {
+          await calendarApi.events.delete(calendarId, e.id!);
+        } else if (events.items!.length > 1 &&
+            isSpecialType &&
+            eventType == type) {
+          await calendarApi.events.delete(calendarId, e.id!);
+        } else if (events.items!.length == 1 &&
+            type == 'Pe' &&
+            eventType != 'Pe') {
+          continue;
+        } else if (events.items!.length == 1 &&
+            isSpecialType &&
+            eventType == type) {
+          await calendarApi.events.delete(calendarId, e.id!);
+        }
+      } else if ((events.items!.length > 1 &&
+              ((isSpecialType && eventType == 'Pe') ||
+                  (!isSpecialType && eventType != 'Pe'))) ||
           (events.items!.length == 1)) {
         await calendarApi.events.delete(calendarId, e.id!);
       }
     }
     if (type != 'A' && type != 'Vc') {
+      print(startTime.timeZoneOffset);
+      print(calendar.EventDateTime(
+              timeZone: controller.tmzLocation, dateTime: startTime)
+          .toJson());
       var event = calendar.Event(
         summary: '$type - ${controller.companyName}',
         description: 'AutoCalendar ${controller.companyName}}',
         start: calendar.EventDateTime(
-            timeZone: controller.tmzLocation,
-            dateTime: DateTime(day.year, day.month, day.day, 8, 30)),
+            timeZone: controller.tmzLocation, dateTime: startTime),
         end: calendar.EventDateTime(
-            timeZone: controller.tmzLocation,
-            dateTime: DateTime(day.year, day.month, day.day, 8, 30).add(
-                Duration(
-                    hours: (partTime
-                        ? 8 * controller.partTimePercentage ~/ 100
-                        : 8),
-                    minutes: partTime ? 0 : 45))),
+            timeZone: controller.tmzLocation, dateTime: endTime),
       );
 
       //num to int: (num).toInt()
       await calendarApi.events.insert(event, calendarId);
     }
+  }
+
+  Future<void> deleteEvent(String? id) async {
+    if (id == null) return;
+    if (!(await GoogleSignIn().isSignedIn())) {
+      this.calendarApi = getCalendarApi();
+    }
+    calendar.CalendarApi? calendarApi = await this.calendarApi;
+    if (calendarApi == null) this.calendarApi = getCalendarApi();
+    var calendarId = await this.calendarId;
+    if (calendarId == null) {
+      return;
+    }
+    //todo gestire errore di doppia cancellazione
+    try {
+      await calendarApi!.events.delete(calendarId, id);
+    } catch (e) {}
   }
 }
